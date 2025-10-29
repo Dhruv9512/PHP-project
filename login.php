@@ -9,7 +9,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $password = $_POST['password'] ?? '';
 
     if (!empty($username) && !empty($password)) {
-        $stmt = $conn->prepare("SELECT * FROM users WHERE username=?");
+        // --- MODIFIED: Added "AND verified = 1" ---
+        $stmt = $conn->prepare("SELECT * FROM users WHERE username=? AND verified = 1");
         $stmt->bind_param("s", $username);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -30,7 +31,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $error = "Invalid password.";
             }
         } else {
-            $error = "User not found.";
+            // Updated error message
+            $error = "User not found or not verified.";
         }
     } else {
         $error = "Both fields are required.";

@@ -1,24 +1,42 @@
 <?php
+session_start();
 include 'db.php';
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $event_name = $_POST['event_name'];
-    $name = $_POST['name'];
-    $email = $_POST['email'];
-    $phone = $_POST['phone'];
+$sub_event_id = 0;
+$sub_event_name = 'Unknown Event';
+$name = '';
+$email = '';
+$phone = '';
+$price = 0.00;
+$registration_id = 0; // For certificate
+$user_id = $_SESSION['user_id'] ?? null; // Get the logged-in user
 
-    // Get event id from events table
-    $stmt = $conn->prepare("SELECT id FROM events WHERE name=?");
-    $stmt->bind_param("s", $event_name);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $event = $result->fetch_assoc();
-    $event_id = $event['id'] ?? 0;
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && $user_id) {
+    $sub_event_id = $_POST['sub_event_id'] ?? 0;
+    $name = $_POST['name'] ?? '';
+    $email = $_POST['email'] ?? '';
+    $phone = $_POST['phone'] ?? '';
+    $price = $_POST['price'] ?? 0.00;
 
-    // Insert registration
-    $stmt = $conn->prepare("INSERT INTO registrations (event_id, name, email, phone) VALUES (?, ?, ?, ?)");
-    $stmt->bind_param("isss", $event_id, $name, $email, $phone);
+    // 1. Get sub-event name
+    $stmt = $conn->prepare("SELECT name FROM sub_events WHERE id = ?");
+    $stmt->bind_param("i", $sub_event_id);
     $stmt->execute();
+    $sub_event = $stmt->get_result()->fetch_assoc();
+    $sub_event_name = $sub_event['name'];
+    $stmt->close();
+
+    // 2. Insert registration with USER ID
+    if ($sub_event_id > 0) {
+        $stmt_insert = $conn->prepare("INSERT INTO registrations (sub_event_id, user_id, name, email, phone) VALUES (?, ?, ?, ?, ?)");
+        $stmt_insert->bind_param("iisss", $sub_event_id, $user_id, $name, $email, $phone);
+        $stmt_insert->execute();
+        $registration_id = $conn->insert_id; // Get the new ID
+        $stmt_insert->close();
+    }
+} elseif (!$user_id) {
+    // Handle error if user is not logged in
+    die("You must be logged in to register.");
 }
 ?>
 
@@ -32,11 +50,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <body class="bg-gray-100 text-gray-800 p-6">
     <div class="max-w-xl mx-auto bg-white p-6 rounded shadow text-center">
         <h1 class="text-3xl font-bold mb-4 text-green-600">Registration Successful!</h1>
-        <p class="mb-2"><strong>Event:</strong> <?php echo $event_name; ?></p>
-        <p class="mb-2"><strong>Name:</strong> <?php echo $name; ?></p>
-        <p class="mb-2"><strong>Email:</strong> <?php echo $email; ?></p>
-        <p class="mb-4"><strong>Phone:</strong> <?php echo $phone; ?></p>
-        <a href="index.php" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">Back to Events</a>
+        <p class="mb-2"><strong>Event:</strong> <?php echo htmlspecialchars($sub_event_name); ?></p>
+        <p class="mb-2"><strong>Name:</strong> <?php echo htmlspecialchars($name); ?></p>
+        <p class="mb-2"><strong>Price:</strong> Free</p>
+
+        <?php if ($registration_id > 0): ?>
+            <p class="mt-6">Your registration is confirmed. Download your certificate:</p>
+            <a href="generate_certificate.php?id=<?php echo $registration_id; ?>" 
+               target="_blank" 
+               class="inline-block mt-2 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
+                Download Certificate
+            </a>
+        <?php endif; ?>
+        
+        <a href="index.php" class="block mt-6 text-purple-600 hover:underline">Back to All Events</a>
     </div>
 </body>
 </html>

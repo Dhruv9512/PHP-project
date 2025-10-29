@@ -1,5 +1,7 @@
 {
     "require": {
-        "phpmailer/phpmailer": "^6.10"
+        "phpmailer/phpmailer": "^6.10",
+        "razorpay/razorpay": "2.*",
+        "tecnickcom/tcpdf": "^6.0"
     }
 }

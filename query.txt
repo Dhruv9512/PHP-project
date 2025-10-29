@@ -1,0 +1,55 @@
+/*
+-- These tables handle the user system
+*/
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(100) NOT NULL UNIQUE,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    verified BOOLEAN DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE email_verifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    otp_hash VARCHAR(255) NOT NULL,
+    expires_at DATETIME NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+/*
+-- These tables handle the NEW dynamic event system
+*/
+CREATE TABLE main_events (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    main_image_url VARCHAR(255)
+);
+
+CREATE TABLE sub_events (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    main_event_id INT NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    date DATETIME NOT NULL,
+    venue VARCHAR(255),
+    description TEXT,
+    price DECIMAL(10, 2) NOT NULL DEFAULT 0.00, /* Handles pricing */
+    FOREIGN KEY (main_event_id) REFERENCES main_events(id) ON DELETE CASCADE
+);
+
+CREATE TABLE registrations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    sub_event_id INT NOT NULL, /* Links to a specific sub-event */
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    phone VARCHAR(50),
+    registration_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (sub_event_id) REFERENCES sub_events(id)
+);
+
+
+
+
+

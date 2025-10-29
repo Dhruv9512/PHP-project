@@ -1,0 +1,13 @@
+# Composer dependencies
+/vendor/
+
+# Configuration files with sensitive data
+razorpay_config.php
+stripe_config.php
+
+# Composer lock file
+# (Some teams commit this, some don't. For a solo project, you can ignore it.)
+composer.lock
+
+# Log files
+*.log
